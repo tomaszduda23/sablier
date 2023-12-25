@@ -2,8 +2,10 @@ package traefik
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptrace"
 )
 
 type SablierMiddleware struct {
@@ -37,9 +39,27 @@ func (sm *SablierMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request
 	}
 	defer resp.Body.Close()
 
+	backendReady := false
+
 	if resp.Header.Get("X-Sablier-Session-Status") == "ready" {
-		sm.next.ServeHTTP(rw, req)
-	} else {
+		// Check if the backend already received request data
+		trace := &httptrace.ClientTrace{
+			WroteHeaders: func() {
+				backendReady = true
+				fmt.Println("------------- WroteHeaders")
+			},
+			WroteRequest: func(httptrace.WroteRequestInfo) {
+				backendReady = true
+				fmt.Println("------------- WroteRequest")
+			},
+		}
+		newCtx := httptrace.WithClientTrace(req.Context(), trace)
+
+		sm.next.ServeHTTP(rw, req.WithContext(newCtx))
+	}
+
+	if backendReady == false {
+		fmt.Println("------------- backend not Ready")
 		forward(resp, rw)
 	}
 }
