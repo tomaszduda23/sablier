@@ -24,6 +24,7 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 		fields   fields
 		sablier  sablier
 		expected string
+		code     int
 	}{
 		{
 			name: "sablier service is ready",
@@ -45,6 +46,7 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 				},
 			},
 			expected: "response from service",
+			code:     200,
 		},
 		{
 			name: "sablier service is not ready",
@@ -65,6 +67,7 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 				},
 			},
 			expected: "response from sablier",
+			code:     200,
 		},
 		{
 			name: "sablier service is ready but 503",
@@ -84,6 +87,70 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 				},
 			},
 			expected: "response from sablier",
+			code:     200,
+		},
+		{
+			name: "sablier service is ready blocking",
+			sablier: sablier{
+				headers: map[string]string{
+					"X-Sablier-Session-Status": "ready",
+				},
+				body: "response from sablier",
+			},
+			fields: fields{
+				Next: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					httptrace.ContextClientTrace(r.Context()).WroteHeaders()
+					fmt.Fprint(w, "response from service")
+				}),
+				Config: &Config{
+					SessionDuration: "1m",
+					Blocking:        &BlockingConfiguration{},
+				},
+			},
+			expected: "response from service",
+			code:     200,
+		},
+		{
+			name: "sablier service is not ready blocking",
+			sablier: sablier{
+				headers: map[string]string{
+					"X-Sablier-Session-Status": "not-ready",
+				},
+				body: "response from sablier",
+			},
+			fields: fields{
+				Next: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					httptrace.ContextClientTrace(r.Context()).WroteHeaders()
+					fmt.Fprint(w, "response from service")
+				}),
+				Config: &Config{
+					SessionDuration: "1m",
+					Blocking:        &BlockingConfiguration{},
+				},
+			},
+			expected: "response from sablier",
+			// is this correct for blocking? I would expect to get error
+			code: 200,
+		},
+		{
+			name: "sablier service is ready 503 blocking",
+			sablier: sablier{
+				headers: map[string]string{
+					"X-Sablier-Session-Status": "ready",
+				},
+				body: "response from sablier",
+			},
+			fields: fields{
+				Next: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusServiceUnavailable)
+				}),
+				Config: &Config{
+					SessionDuration: "1m",
+					Blocking:        &BlockingConfiguration{},
+				},
+			},
+			expected: "Found",
+			code:     302,
 		},
 	}
 	for _, tt := range tests {
@@ -116,6 +183,10 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 			}
 			if string(data) != tt.expected {
 				t.Errorf("expected '%s' got '%v'", tt.expected, string(data))
+			}
+			if res.StatusCode != tt.code {
+				t.Errorf("expected '%d' got '%d'", tt.code, res.StatusCode)
+
 			}
 		})
 	}
