@@ -47,6 +47,8 @@ func (sm *SablierMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request
 
 	conditonalResponseWriter := newResponseWriter(rw)
 
+	useRedirect := false
+
 	if resp.Header.Get("X-Sablier-Session-Status") == "ready" {
 		// Check if the backend already received request data
 		trace := &httptrace.ClientTrace{
@@ -59,11 +61,12 @@ func (sm *SablierMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request
 		}
 		newCtx := httptrace.WithClientTrace(req.Context(), trace)
 		sm.next.ServeHTTP(conditonalResponseWriter, req.WithContext(newCtx))
+		useRedirect = sm.useRedirect
 	}
 
 	if conditonalResponseWriter.ready == false {
 		conditonalResponseWriter.ready = true
-		if sm.useRedirect {
+		if useRedirect {
 			conditonalResponseWriter.Header().Set("Location", req.URL.String())
 
 			status := http.StatusFound
