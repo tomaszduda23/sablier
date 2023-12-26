@@ -66,6 +66,25 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 			},
 			expected: "response from sablier",
 		},
+		{
+			name: "sablier service is ready but 503",
+			sablier: sablier{
+				headers: map[string]string{
+					"X-Sablier-Session-Status": "ready",
+				},
+				body: "response from sablier",
+			},
+			fields: fields{
+				Next: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusServiceUnavailable)
+				}),
+				Config: &Config{
+					SessionDuration: "1m",
+					Dynamic:         &DynamicConfiguration{},
+				},
+			},
+			expected: "response from sablier",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
