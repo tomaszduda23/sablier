@@ -133,7 +133,7 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 			code: 200,
 		},
 		{
-			name: "sablier service is ready 503 blocking",
+			name: "sablier service is ready blocking but 503",
 			sablier: sablier{
 				headers: map[string]string{
 					"X-Sablier-Session-Status": "ready",
