@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httptrace"
 	"testing"
 )
 
@@ -34,7 +35,9 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 			},
 			fields: fields{
 				Next: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					httptrace.ContextClientTrace(r.Context()).WroteHeaders()
 					fmt.Fprint(w, "response from service")
+
 				}),
 				Config: &Config{
 					SessionDuration: "1m",
@@ -53,6 +56,7 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 			},
 			fields: fields{
 				Next: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					httptrace.ContextClientTrace(r.Context()).WroteHeaders()
 					fmt.Fprint(w, "response from service")
 				}),
 				Config: &Config{
@@ -92,7 +96,7 @@ func TestSablierMiddleware_ServeHTTP(t *testing.T) {
 				t.Errorf("expected error to be nil got %v", err)
 			}
 			if string(data) != tt.expected {
-				t.Errorf("expected %s got %v", tt.expected, string(data))
+				t.Errorf("expected '%s' got '%v'", tt.expected, string(data))
 			}
 		})
 	}
