@@ -142,13 +142,17 @@ func (r *responseWriter) WriteHeader(code int) {
 }
 
 func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	fmt.Println("=== hijack")
 	hijacker, ok := r.responseWriter.(http.Hijacker)
 	if !ok {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
 	}
-	conn, bufio, err := hijacker.Hijack()
-	return newConnWrapper(conn), bufio, err
+	if r.websocket {
+		fmt.Println("=== hijack")
+		conn, bufio, err := hijacker.Hijack()
+		return newConnWrapper(conn), bufio, err
+	} else {
+		return hijacker.Hijack()
+	}
 }
 
 func (r *responseWriter) Flush() {
@@ -182,12 +186,12 @@ type conn struct {
 }
 
 func (c *conn) Read(b []byte) (n int, err error) {
-	fmt.Println("=== websocket read")
+	fmt.Println("=== websocket read", len(b))
 	return c.Read(b)
 }
 
 func (c *conn) Write(b []byte) (n int, err error) {
-	fmt.Println("=== websocket write")
+	fmt.Println("=== websocket write", len(b))
 	return c.Write(b)
 }
 
