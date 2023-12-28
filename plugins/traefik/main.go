@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	"strings"
+	"time"
 )
 
 type SablierMiddleware struct {
@@ -46,12 +47,13 @@ func (sm *SablierMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request
 
 	defer resp.Body.Close()
 
+	conditonalResponseWriter := newResponseWriter(rw)
+
 	if isWebsocketRequest(req) {
 		// TODO dynamic make no sense for websocket.
 		fmt.Println("=== websocket request")
+		conditonalResponseWriter.websocket = true
 	}
-
-	conditonalResponseWriter := newResponseWriter(rw)
 
 	useRedirect := false
 
@@ -103,6 +105,7 @@ type responseWriter struct {
 	responseWriter http.ResponseWriter
 	headers        http.Header
 	ready          bool
+	websocket      bool
 }
 
 func (r *responseWriter) Header() http.Header {
@@ -144,7 +147,8 @@ func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
 	}
-	return hijacker.Hijack()
+	conn, bufio, err := hijacker.Hijack()
+	return newConnWrapper(conn), bufio, err
 }
 
 func (r *responseWriter) Flush() {
@@ -165,4 +169,48 @@ func containsHeader(req *http.Request, name, value string) bool {
 		}
 	}
 	return false
+}
+
+func newConnWrapper(c net.Conn) *conn {
+	return &conn{
+		conn: c,
+	}
+}
+
+type conn struct {
+	conn net.Conn
+}
+
+func (c *conn) Read(b []byte) (n int, err error) {
+	fmt.Println("=== websocket read")
+	return c.Read(b)
+}
+
+func (c *conn) Write(b []byte) (n int, err error) {
+	fmt.Println("=== websocket write")
+	return c.Write(b)
+}
+
+func (c *conn) Close() error {
+	return c.Close()
+}
+
+func (c *conn) LocalAddr() net.Addr {
+	return c.LocalAddr()
+}
+
+func (c *conn) RemoteAddr() net.Addr {
+	return c.RemoteAddr()
+}
+
+func (c *conn) SetDeadline(t time.Time) error {
+	return c.SetDeadline(t)
+}
+
+func (c *conn) SetReadDeadline(t time.Time) error {
+	return c.SetReadDeadline(t)
+}
+
+func (c *conn) SetWriteDeadline(t time.Time) error {
+	return c.SetWriteDeadline(t)
 }
