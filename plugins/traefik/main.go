@@ -50,7 +50,7 @@ func (sm *SablierMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request
 	conditonalResponseWriter := newResponseWriter(rw)
 
 	if isWebsocketRequest(req) {
-		// TODO dynamic make no sense for websocket.
+		// FIXME dynamic make no sense for websocket since client return error
 		fmt.Println("=== websocket request")
 		conditonalResponseWriter.websocket = true
 	}
@@ -123,7 +123,6 @@ func (r *responseWriter) Write(buf []byte) (int, error) {
 }
 
 func (r *responseWriter) WriteHeader(code int) {
-	fmt.Println("=== code", code)
 	if r.ready == false && code == http.StatusServiceUnavailable {
 		// We get a 503 HTTP Status Code when there is no backend server in the pool
 		// to which the request could be sent.  Also, note that r.ready
@@ -147,7 +146,7 @@ func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
 	}
 	if r.websocket {
-		fmt.Println("=== hijack")
+		fmt.Println("=== hijack for websocket")
 		conn, bufio, err := hijacker.Hijack()
 		return newConnWrapper(conn), bufio, err
 	} else {
@@ -186,12 +185,15 @@ type conn struct {
 }
 
 func (c *conn) Read(b []byte) (n int, err error) {
-	fmt.Println("=== websocket read", len(b))
-	return c.conn.Read(b)
+	len, e := c.conn.Read(b)
+	// TODO need to call backend but it must not be done each time since http requests are too slow
+	fmt.Println("=== websocket read", len)
+	return len, e
 }
 
 func (c *conn) Write(b []byte) (n int, err error) {
 	fmt.Println("=== websocket write", len(b))
+	// TODO need to call backend but it must not be done each time since http requests are too slow
 	return c.conn.Write(b)
 }
 
