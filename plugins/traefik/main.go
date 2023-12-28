@@ -123,6 +123,10 @@ func (r *responseWriter) Write(buf []byte) (int, error) {
 }
 
 func (r *responseWriter) WriteHeader(code int) {
+	//TODO need to check for code 101? Is it possible that after error connection won't be websocket
+	// if code != 101 {
+	// 	r.websocket = false
+	// }
 	if r.ready == false && code == http.StatusServiceUnavailable {
 		// We get a 503 HTTP Status Code when there is no backend server in the pool
 		// to which the request could be sent.  Also, note that r.ready
