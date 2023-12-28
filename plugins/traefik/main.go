@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"strings"
 )
 
 type SablierMiddleware struct {
@@ -44,6 +45,11 @@ func (sm *SablierMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request
 	}
 
 	defer resp.Body.Close()
+
+	if isWebsocketRequest(req) {
+		// TODO dynamic make no sense for websocket.
+		fmt.Println("=== websocket request")
+	}
 
 	conditonalResponseWriter := newResponseWriter(rw)
 
@@ -114,6 +120,7 @@ func (r *responseWriter) Write(buf []byte) (int, error) {
 }
 
 func (r *responseWriter) WriteHeader(code int) {
+	fmt.Println("=== code", code)
 	if r.ready == false && code == http.StatusServiceUnavailable {
 		// We get a 503 HTTP Status Code when there is no backend server in the pool
 		// to which the request could be sent.  Also, note that r.ready
@@ -132,6 +139,7 @@ func (r *responseWriter) WriteHeader(code int) {
 }
 
 func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	fmt.Println("=== hijack")
 	hijacker, ok := r.responseWriter.(http.Hijacker)
 	if !ok {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
@@ -143,4 +151,18 @@ func (r *responseWriter) Flush() {
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+func isWebsocketRequest(req *http.Request) bool {
+	return containsHeader(req, "Connection", "upgrade") && containsHeader(req, "Upgrade", "websocket")
+}
+
+func containsHeader(req *http.Request, name, value string) bool {
+	items := strings.Split(req.Header.Get(name), ",")
+	for _, item := range items {
+		if value == strings.ToLower(strings.TrimSpace(item)) {
+			return true
+		}
+	}
+	return false
 }
