@@ -127,6 +127,7 @@ func (r *responseWriter) WriteHeader(code int) {
 	// if code != 101 {
 	// 	r.websocket = false
 	// }
+	fmt.Println("=== code", code)
 	if r.ready == false && code == http.StatusServiceUnavailable {
 		// We get a 503 HTTP Status Code when there is no backend server in the pool
 		// to which the request could be sent.  Also, note that r.ready
@@ -202,6 +203,7 @@ func (c *conn) Write(b []byte) (n int, err error) {
 }
 
 func (c *conn) Close() error {
+	fmt.Println("=== websocket close")
 	return c.conn.Close()
 }
 
