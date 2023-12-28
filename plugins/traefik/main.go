@@ -187,34 +187,34 @@ type conn struct {
 
 func (c *conn) Read(b []byte) (n int, err error) {
 	fmt.Println("=== websocket read", len(b))
-	return c.Read(b)
+	return c.conn.Read(b)
 }
 
 func (c *conn) Write(b []byte) (n int, err error) {
 	fmt.Println("=== websocket write", len(b))
-	return c.Write(b)
+	return c.conn.Write(b)
 }
 
 func (c *conn) Close() error {
-	return c.Close()
+	return c.conn.Close()
 }
 
 func (c *conn) LocalAddr() net.Addr {
-	return c.LocalAddr()
+	return c.conn.LocalAddr()
 }
 
 func (c *conn) RemoteAddr() net.Addr {
-	return c.RemoteAddr()
+	return c.conn.RemoteAddr()
 }
 
 func (c *conn) SetDeadline(t time.Time) error {
-	return c.SetDeadline(t)
+	return c.conn.SetDeadline(t)
 }
 
 func (c *conn) SetReadDeadline(t time.Time) error {
-	return c.SetReadDeadline(t)
+	return c.conn.SetReadDeadline(t)
 }
 
 func (c *conn) SetWriteDeadline(t time.Time) error {
-	return c.SetWriteDeadline(t)
+	return c.conn.SetWriteDeadline(t)
 }
