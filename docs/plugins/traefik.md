@@ -81,7 +81,7 @@ Traefik also have [allowEmptyServices](https://doc.traefik.io/traefik/providers/
 
 You must use [`allowEmptyServices`](https://doc.traefik.io/traefik/providers/kubernetes-ingress/#allowemptyservices)
 
-The blocking strategy is supported by issuing redirect which force client to retry request. It might fail if client do not support redirections (e.g. curl without -L). Everytime the underlying configuration changes, the whole router is regenrated, thus changing the router during a request will still map to the old router. For more details, see [#62](https://github.com/acouvreur/sablier/issues/62).
+The blocking strategy is supported by issuing redirect which force client to retry request. It might fail if client do not support redirections (e.g. `curl` without `-L`). Everytime the underlying configuration changes, the whole router is regenrated, thus changing the router during a request will still map to the old router. For more details, see [#62](https://github.com/acouvreur/sablier/issues/62).
 
 <!-- tabs:end -->
 
