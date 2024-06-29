@@ -8,7 +8,7 @@ The [Traefik Sablier Plugin](https://plugins.traefik.io/plugins/633b4658a4caa9dd
 | --------------------------------------- | :-----: | :-----------------------------------------------------: |
 | [Docker](/providers/docker)             |    ✅    |                            ✅                            |
 | [Docker Swarm](/providers/docker_swarm) |    ✅    |                            ✅                            |
-| [Kubernetes](/providers/kubernetes)     |    ✅    | ❌ [#62](https://github.com/acouvreur/sablier/issues/62) |
+| [Kubernetes](/providers/kubernetes)     |    ✅    |                            ✅                            |
 
 ## Prerequisites
 
